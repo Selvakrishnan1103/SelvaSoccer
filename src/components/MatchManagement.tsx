@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
 import { Match, Team, Tournament, UserProfile, MatchEvent } from '../types';
 import { generateFixtures } from '../utils/db';
-import { 
-  Calendar, 
-  Plus, 
-  MapPin, 
-  Clock, 
-  Trophy, 
-  Zap, 
-  ChevronRight, 
-  ChevronLeft, 
-  Search, 
-  Award, 
-  Dribbble, 
-  ListOrdered, 
-  Users, 
+import {
+  Calendar,
+  Plus,
+  MapPin,
+  Trophy,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  Award,
+  ListOrdered,
   X,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
 } from 'lucide-react';
 
 interface MatchManagementProps {
@@ -31,7 +27,7 @@ interface MatchManagementProps {
   onSaveTournament: (tournament: Tournament, fixtures: Match[]) => void;
   onStartMatch: (match: Match) => void;
   onViewMatchDetails: (matchId: string) => void;
-  matchEventsMap: Record<string, MatchEvent[]>; // matchId -> events
+  matchEventsMap: Record<string, MatchEvent[]>;
 }
 
 export default function MatchManagement({
@@ -49,15 +45,12 @@ export default function MatchManagement({
   const [activeSubTab, setActiveSubTab] = useState<'matches' | 'tournaments'>('matches');
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
 
-  // Modals
   const [showCreate1v1Modal, setShowCreate1v1Modal] = useState(false);
   const [showCreateTourneyModal, setShowCreateTourneyModal] = useState(false);
 
-  // Filter & Search
   const [matchSearch, setMatchSearch] = useState('');
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('');
 
-  // 1v1 Form states
   const [formTeamA, setFormTeamA] = useState('');
   const [formTeamB, setFormTeamB] = useState('');
   const [formDate, setFormDate] = useState('');
@@ -65,7 +58,6 @@ export default function MatchManagement({
   const [formVenue, setFormVenue] = useState('Central Turf Arena');
   const [formError1v1, setFormError1v1] = useState('');
 
-  // Tournament Form states
   const [tourneyName, setTourneyName] = useState('');
   const [tourneyDesc, setTourneyDesc] = useState('');
   const [tourneyStart, setTourneyStart] = useState('');
@@ -75,46 +67,30 @@ export default function MatchManagement({
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [tourneyError, setTourneyError] = useState('');
 
-  // Helpers to fetch team data
   const getTeamLogo = (id: string) => teams.find(t => t.id === id)?.logo || '⚽';
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name || 'Unknown Team';
 
-  // Filters matches
   const filteredMatches = matches
-    .filter((m) => {
-      // Don't show tournament matches in the outer list if a tournament drill down is active
+    .filter(m => {
       if (m.type === 'tournament' && selectedTournament) return false;
-
-      const searchableString = `${m.teamAName} vs ${m.teamBName} ${m.venue}`.toLowerCase();
-      const matchesSearch = searchableString.includes(matchSearch.toLowerCase());
+      const s = `${m.teamAName} vs ${m.teamBName} ${m.venue}`.toLowerCase();
+      const matchesSearch = s.includes(matchSearch.toLowerCase());
       const matchesTeam = selectedTeamFilter
-        ? (m.teamAId === selectedTeamFilter || m.teamBId === selectedTeamFilter)
+        ? m.teamAId === selectedTeamFilter || m.teamBId === selectedTeamFilter
         : true;
       return matchesSearch && matchesTeam;
     })
     .sort((a, b) => new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime());
 
-  // Submit 1v1 Form
   const handleCreate1v1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError1v1('');
-
-    if (!formTeamA || !formTeamB) {
-      setFormError1v1('Please select both teams.');
-      return;
-    }
-    if (formTeamA === formTeamB) {
-      setFormError1v1('Teams must be distinct.');
-      return;
-    }
-    if (!formDate) {
-      setFormError1v1('Please enter a match date.');
-      return;
-    }
+    if (!formTeamA || !formTeamB) return setFormError1v1('Please select both teams.');
+    if (formTeamA === formTeamB) return setFormError1v1('Teams must be distinct.');
+    if (!formDate) return setFormError1v1('Please enter a match date.');
 
     const teamA = teams.find(t => t.id === formTeamA)!;
     const teamB = teams.find(t => t.id === formTeamB)!;
-
     const newMatch: Match = {
       id: `match_1v1_${Date.now()}`,
       type: 'one_vs_one',
@@ -129,34 +105,19 @@ export default function MatchManagement({
       venue: formVenue.trim() || 'Central Turf Arena',
       status: 'scheduled',
       scoreA: 0,
-      scoreB: 0
+      scoreB: 0,
     };
-
     onSaveMatch(newMatch);
     setShowCreate1v1Modal(false);
-    setFormTeamA('');
-    setFormTeamB('');
-    setFormDate('');
-    setFormVenue('Central Turf Arena');
+    setFormTeamA(''); setFormTeamB(''); setFormDate(''); setFormVenue('Central Turf Arena');
   };
 
-  // Submit Tournament Form
   const handleCreateTourneySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTourneyError('');
-
-    if (!tourneyName.trim()) {
-      setTourneyError('Tournament name is required.');
-      return;
-    }
-    if (selectedTeamIds.length < 2) {
-      setTourneyError('A tournament requires at least 2 participating teams.');
-      return;
-    }
-    if (!tourneyStart || !tourneyEnd) {
-      setTourneyError('Start and End dates are required.');
-      return;
-    }
+    if (!tourneyName.trim()) return setTourneyError('Tournament name is required.');
+    if (selectedTeamIds.length < 2) return setTourneyError('At least 2 teams required.');
+    if (!tourneyStart || !tourneyEnd) return setTourneyError('Start and end dates are required.');
 
     const newTournamentId = `tourney_${Date.now()}`;
     const newTournament: Tournament = {
@@ -168,118 +129,58 @@ export default function MatchManagement({
       logo: tourneyLogo,
       format: tourneyFormat,
       participatingTeamIds: selectedTeamIds,
-      status: 'upcoming'
+      status: 'upcoming',
     };
 
-    // Auto-generate schedules/fixtures
     const teamsMap: Record<string, string> = {};
     const logosMap: Record<string, string> = {};
-    teams.forEach(t => {
-      teamsMap[t.id] = t.name;
-      logosMap[t.id] = t.logo;
-    });
+    teams.forEach(t => { teamsMap[t.id] = t.name; logosMap[t.id] = t.logo; });
 
-    const generatedMatches = generateFixtures(
-      newTournamentId, 
-      selectedTeamIds, 
-      tourneyFormat, 
-      teamsMap, 
-      logosMap
-    );
-
+    const generatedMatches = generateFixtures(newTournamentId, selectedTeamIds, tourneyFormat, teamsMap, logosMap);
     onSaveTournament(newTournament, generatedMatches);
     setShowCreateTourneyModal(false);
-    // Reset inputs
-    setTourneyName('');
-    setTourneyDesc('');
-    setTourneyStart('');
-    setTourneyEnd('');
-    setTourneyLogo('🏆');
-    setSelectedTeamIds([]);
+    setTourneyName(''); setTourneyDesc(''); setTourneyStart(''); setTourneyEnd('');
+    setTourneyLogo('🏆'); setSelectedTeamIds([]);
   };
 
   const toggleTourneyTeamSelection = (teamId: string) => {
-    if (selectedTeamIds.includes(teamId)) {
-      setSelectedTeamIds(selectedTeamIds.filter(id => id !== teamId));
-    } else {
-      setSelectedTeamIds([...selectedTeamIds, teamId]);
-    }
+    setSelectedTeamIds(prev =>
+      prev.includes(teamId) ? prev.filter(id => id !== teamId) : [...prev, teamId]
+    );
   };
 
-  // COMPUTE DYNAMIC POINTS TABLE FOR SELECTED TOURNAMENT
   const getTournamentStats = (tournament: Tournament) => {
-    // Collect all matches for this specific tournament
     const tourneyMatches = matches.filter(m => m.tournamentId === tournament.id);
-    
     const table: Record<string, {
-      teamId: string;
-      teamName: string;
-      teamLogo: string;
-      played: number;
-      wins: number;
-      draws: number;
-      losses: number;
-      goalsFor: number;
-      goalsAgainst: number;
-      goalDifference: number;
-      points: number;
+      teamId: string; teamName: string; teamLogo: string;
+      played: number; wins: number; draws: number; losses: number;
+      goalsFor: number; goalsAgainst: number; goalDifference: number; points: number;
     }> = {};
 
-    // Initialize all participating teams
     tournament.participatingTeamIds.forEach(teamId => {
       const tm = teams.find(t => t.id === teamId);
       table[teamId] = {
-        teamId,
-        teamName: tm?.name || 'Unknown',
-        teamLogo: tm?.logo || '⚽',
-        played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        goalsFor: 0,
-        goalsAgainst: 0,
-        goalDifference: 0,
-        points: 0
+        teamId, teamName: tm?.name || 'Unknown', teamLogo: tm?.logo || '⚽',
+        played: 0, wins: 0, draws: 0, losses: 0,
+        goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0,
       };
     });
 
-    // Traverse matches
     tourneyMatches.forEach(m => {
       if (m.status !== 'completed') return;
-
       const cardA = table[m.teamAId];
       const cardB = table[m.teamBId];
-
-      if (cardA && cardB) {
-        cardA.played += 1;
-        cardB.played += 1;
-
-        cardA.goalsFor += m.scoreA;
-        cardA.goalsAgainst += m.scoreB;
-        cardB.goalsFor += m.scoreB;
-        cardB.goalsAgainst += m.scoreA;
-
-        if (m.scoreA > m.scoreB) {
-          cardA.wins += 1;
-          cardA.points += 3;
-          cardB.losses += 1;
-        } else if (m.scoreB > m.scoreA) {
-          cardB.wins += 1;
-          cardB.points += 3;
-          cardA.losses += 1;
-        } else {
-          cardA.draws += 1;
-          cardA.points += 1;
-          cardB.draws += 1;
-          cardB.points += 1;
-        }
-
-        cardA.goalDifference = cardA.goalsFor - cardA.goalsAgainst;
-        cardB.goalDifference = cardB.goalsFor - cardB.goalsAgainst;
-      }
+      if (!cardA || !cardB) return;
+      cardA.played += 1; cardB.played += 1;
+      cardA.goalsFor += m.scoreA; cardA.goalsAgainst += m.scoreB;
+      cardB.goalsFor += m.scoreB; cardB.goalsAgainst += m.scoreA;
+      if (m.scoreA > m.scoreB) { cardA.wins += 1; cardA.points += 3; cardB.losses += 1; }
+      else if (m.scoreB > m.scoreA) { cardB.wins += 1; cardB.points += 3; cardA.losses += 1; }
+      else { cardA.draws += 1; cardA.points += 1; cardB.draws += 1; cardB.points += 1; }
+      cardA.goalDifference = cardA.goalsFor - cardA.goalsAgainst;
+      cardB.goalDifference = cardB.goalsFor - cardB.goalsAgainst;
     });
 
-    // Convert keys to array and sort: 1.Points, 2.GD, 3.GoalsFor
     return Object.values(table).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
@@ -287,7 +188,6 @@ export default function MatchManagement({
     });
   };
 
-  // GET INDIVIDUAL HIGHLIGHTS OF TOURNAMENT (derived from inside match logs)
   const getTournamentScorers = (tournament: Tournament) => {
     const tourneyMatches = matches.filter(m => m.tournamentId === tournament.id);
     const goalsScorecard: Record<string, { name: string; teamLogo: string; goals: number }> = {};
@@ -297,561 +197,480 @@ export default function MatchManagement({
       const envs = matchEventsMap[m.id] || [];
       envs.forEach(evt => {
         if (evt.type === 'goal' && evt.playerAId) {
-          if (!goalsScorecard[evt.playerAId]) {
-            goalsScorecard[evt.playerAId] = { 
-              name: evt.playerAName, 
-              teamLogo: getTeamLogo(evt.teamId), 
-              goals: 0 
-            };
-          }
+          if (!goalsScorecard[evt.playerAId])
+            goalsScorecard[evt.playerAId] = { name: evt.playerAName, teamLogo: getTeamLogo(evt.teamId), goals: 0 };
           goalsScorecard[evt.playerAId].goals += 1;
         }
         if (evt.type === 'assist' && evt.playerBId) {
-          if (!assistsScorecard[evt.playerBId]) {
-            assistsScorecard[evt.playerBId] = { 
-              name: evt.playerBName || 'Anonymous', 
-              teamLogo: getTeamLogo(evt.teamId), 
-              assists: 0 
-            };
-          }
+          if (!assistsScorecard[evt.playerBId])
+            assistsScorecard[evt.playerBId] = { name: evt.playerBName || 'Anonymous', teamLogo: getTeamLogo(evt.teamId), assists: 0 };
           assistsScorecard[evt.playerBId].assists += 1;
         }
       });
     });
 
-    const topScorers = Object.values(goalsScorecard).sort((a, b) => b.goals - a.goals).slice(0, 5);
-    const topAssists = Object.values(assistsScorecard).sort((a, b) => b.assists - a.assists).slice(0, 5);
-
-    return { topScorers, topAssists };
+    return {
+      topScorers: Object.values(goalsScorecard).sort((a, b) => b.goals - a.goals).slice(0, 5),
+      topAssists: Object.values(assistsScorecard).sort((a, b) => b.assists - a.assists).slice(0, 5),
+    };
   };
 
-  return (
-    <div className="space-y-6 animate-fade-in pb-16">
-      {/* Drill-down Tournament Detail Page */}
-      {selectedTournament ? (
-        <div id="tournament-detail-page" className="space-y-6">
-          {/* Breadcrumbs Banner */}
-          <div className="flex justify-between items-center bg-neutral-900 border border-neutral-800 text-white rounded-2xl p-4 sm:p-6 shadow">
-            <div className="flex gap-4 items-center">
-              <button
-                id="back-to-tourneys-btn"
-                onClick={() => setSelectedTournament(null)}
-                className="p-2 hover:bg-neutral-800 rounded-xl transition text-emerald-400 font-bold flex items-center gap-1"
-              >
-                <ChevronLeft className="w-5 h-5" /> Back
-              </button>
-              <div className="w-1.5 h-8 bg-emerald-500 rounded"></div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black flex items-center gap-2">
-                  <span>{selectedTournament.logo}</span> {selectedTournament.name}
-                </h1>
-                <p className="text-xs text-neutral-400 mt-0.5 line-clamp-1 max-w-lg">
-                  {selectedTournament.description || 'Active Football League details'}
-                </p>
-              </div>
+  // ─── Shared input classes ────────────────────────────────────────────────
+  const inputCls =
+    'w-full px-3 py-2 text-sm bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-emerald-500 dark:text-white transition-colors';
+  const labelCls = 'block text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1';
+
+  // ─── Status badge helper ─────────────────────────────────────────────────
+  const StatusBadge = ({ status }: { status: string }) => {
+    const map: Record<string, string> = {
+      live: 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 animate-pulse',
+      completed: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400',
+      scheduled: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500',
+      ongoing: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400',
+      upcoming: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400',
+    };
+    return (
+      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${map[status] ?? map.scheduled}`}>
+        {status}
+      </span>
+    );
+  };
+
+  // ─── Match card ──────────────────────────────────────────────────────────
+  const MatchCard = ({ m }: { m: Match }) => (
+    <div
+      onClick={() => onViewMatchDetails(m.id)}
+      className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150 space-y-4"
+    >
+      {/* Top row */}
+      <div className="flex items-center justify-between">
+        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${
+          m.type === 'tournament'
+            ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400'
+            : 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400'
+        }`}>
+          {m.type === 'tournament' ? 'League' : 'Friendly'}
+        </span>
+        <span className="flex items-center gap-1 text-[11px] text-neutral-400">
+          <MapPin className="w-3 h-3" /> {m.venue}
+        </span>
+      </div>
+
+      {/* Teams */}
+      <div className="grid grid-cols-7 items-center">
+        <div className="col-span-3 flex flex-col items-center gap-1.5">
+          <span className="text-3xl">{m.teamALogo || '⚽'}</span>
+          <span className="text-xs font-semibold text-center text-neutral-800 dark:text-white line-clamp-1">{m.teamAName}</span>
+        </div>
+        <div className="col-span-1 flex flex-col items-center gap-1">
+          {(m.status === 'completed' || m.status === 'live') ? (
+            <span className="text-lg font-bold font-mono text-neutral-900 dark:text-white tracking-tight">
+              {m.scoreA}–{m.scoreB}
+            </span>
+          ) : (
+            <span className="text-[10px] font-semibold text-neutral-400 uppercase">vs</span>
+          )}
+          <span className="text-[10px] font-mono text-neutral-400">{m.time}</span>
+        </div>
+        <div className="col-span-3 flex flex-col items-center gap-1.5">
+          <span className="text-3xl">{m.teamBLogo || '⚽'}</span>
+          <span className="text-xs font-semibold text-center text-neutral-800 dark:text-white line-clamp-1">{m.teamBName}</span>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 flex items-center justify-between">
+        <span className="flex items-center gap-1 text-[11px] text-neutral-400 font-mono">
+          <Calendar className="w-3 h-3" /> {m.date}
+        </span>
+        <div>
+          {m.status === 'live' ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-red-500 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /> Live
+            </span>
+          ) : m.status === 'completed' ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-500">
+              <Sparkles className="w-3 h-3" /> Final
+            </span>
+          ) : isAdmin ? (
+            <button
+              onClick={e => { e.stopPropagation(); onStartMatch(m); }}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Start match
+            </button>
+          ) : (
+            <StatusBadge status="scheduled" />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── Tournament card ─────────────────────────────────────────────────────
+  const TournamentCard = ({ t }: { t: Tournament }) => (
+    <div
+      onClick={() => setSelectedTournament(t)}
+      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150 flex flex-col gap-4"
+    >
+      <div className="flex items-start justify-between">
+        <span className="text-4xl bg-neutral-50 dark:bg-neutral-800 p-3 rounded-xl leading-none">{t.logo || '🏆'}</span>
+        <StatusBadge status={t.status} />
+      </div>
+      <div>
+        <h3 className="font-semibold text-neutral-900 dark:text-white leading-snug">{t.name}</h3>
+        {t.description && (
+          <p className="text-xs text-neutral-500 mt-1 leading-relaxed line-clamp-2">{t.description}</p>
+        )}
+      </div>
+      <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 flex items-center justify-between">
+        <span className="text-xs text-neutral-400">{t.participatingTeamIds.length} teams registered</span>
+        <span className="text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
+          Season details <ChevronRight className="w-3.5 h-3.5" />
+        </span>
+      </div>
+    </div>
+  );
+
+  // ─── Tournament detail ───────────────────────────────────────────────────
+  if (selectedTournament) {
+    const stats = getTournamentStats(selectedTournament);
+    const { topScorers, topAssists } = getTournamentScorers(selectedTournament);
+    const tourneyMatches = matches.filter(m => m.tournamentId === selectedTournament.id);
+
+    return (
+      <div className="space-y-6 pb-16">
+        {/* Breadcrumb banner */}
+        <div className="flex justify-between items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl px-5 py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedTournament(null)}
+              className="flex items-center gap-1 text-sm font-semibold text-emerald-500 hover:text-emerald-600 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
+            <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700" />
+            <div>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <span>{selectedTournament.logo}</span> {selectedTournament.name}
+              </h1>
+              <p className="text-xs text-neutral-400 mt-0.5">{selectedTournament.description || 'Tournament details'}</p>
+            </div>
+          </div>
+          <div className="hidden sm:block text-right">
+            <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-semibold">Timeline</p>
+            <p className="text-xs font-mono text-neutral-500">{selectedTournament.startDate} – {selectedTournament.endDate}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Fixtures */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-emerald-500" /> Match schedule
+              </h2>
+              <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 px-2.5 py-1 rounded-lg font-semibold uppercase tracking-wider">
+                {selectedTournament.format === 'round_robin' ? 'Round robin' : 'Knockout'}
+              </span>
             </div>
 
-            <div className="hidden sm:block text-right">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 block">Season Timeline</span>
-              <span className="text-xs font-mono text-neutral-350">{selectedTournament.startDate} - {selectedTournament.endDate}</span>
+            <div className="space-y-2.5">
+              {tourneyMatches.length === 0 ? (
+                <div className="p-10 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-400">
+                  No fixtures generated yet.
+                </div>
+              ) : (
+                tourneyMatches.map(m => (
+                  <div
+                    key={m.id}
+                    onClick={() => onViewMatchDetails(m.id)}
+                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors flex items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
+                        {m.round && <span className="font-semibold text-emerald-500">Round {m.round}</span>}
+                        <span>·</span>
+                        <span>{m.date}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" /> {m.venue}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm font-semibold text-neutral-800 dark:text-white">
+                        <span>{m.teamALogo} {m.teamAName}</span>
+                        {(m.status === 'completed' || m.status === 'live') ? (
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold font-mono ${m.status === 'live' ? 'bg-red-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white'}`}>
+                            {m.scoreA} – {m.scoreB}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-neutral-400">VS</span>
+                        )}
+                        <span>{m.teamBLogo} {m.teamBName}</span>
+                      </div>
+                    </div>
+                    <div className="shrink-0">
+                      {m.status === 'live' ? (
+                        <StatusBadge status="live" />
+                      ) : m.status === 'completed' ? (
+                        <StatusBadge status="completed" />
+                      ) : isAdmin ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); onStartMatch(m); }}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          Start match
+                        </button>
+                      ) : (
+                        <StatusBadge status="scheduled" />
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          {/* Drill-down content columns */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Fixtures & Matches */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-emerald-500" /> Match Schedules
-                </h2>
-                <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-450 px-2.5 py-1 rounded-lg font-semibold">
-                  Format: {selectedTournament.format === 'round_robin' ? 'Round Robin Ledger' : 'Standard Knockout'}
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                {matches.filter((m) => m.tournamentId === selectedTournament.id).length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200">
-                    No fixtures populated for this tournament.
-                  </div>
-                ) : (
-                  matches
-                    .filter((m) => m.tournamentId === selectedTournament.id)
-                    .map((m) => (
-                      <div
-                        id={`drill-tournament-match-${m.id}`}
-                        key={m.id}
-                        onClick={() => onViewMatchDetails(m.id)}
-                        className="p-4 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-2xl cursor-pointer hover:shadow-sm hover:border-neutral-250 dark:hover:border-neutral-750 transition flex justify-between items-center gap-4"
-                      >
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2 text-xs font-mono text-neutral-400">
-                            {m.round && <span className="font-bold text-emerald-500">Round {m.round}</span>}
-                            <span>•</span>
-                            <span>{m.date}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {m.venue}</span>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold flex items-center gap-1">
-                              <span>{m.teamALogo || '⚽'}</span> {m.teamAName}
-                            </span>
-                            {m.status === 'completed' || m.status === 'live' ? (
-                              <span className={`px-2 py-0.5 rounded text-xs font-extrabold font-mono tracking-tight ${m.status === 'live' ? 'bg-red-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white'}`}>
-                                {m.scoreA} - {m.scoreB}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-neutral-400 uppercase">VS</span>
-                            )}
-                            <span className="text-sm font-semibold flex items-center gap-1">
-                              <span>{m.teamBLogo || '⚽'}</span> {m.teamBName}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 flex flex-col items-end gap-1.5">
-                          {m.status === 'live' ? (
-                            <span className="px-2 py-0.5 rounded bg-red-100 text-red-650 text-[10px] font-extrabold uppercase animate-pulse">Live</span>
-                          ) : m.status === 'completed' ? (
-                            <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold uppercase">Completed</span>
-                          ) : isAdmin ? (
-                            <button
-                              id={`start-from-tourney-${m.id}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onStartMatch(m);
-                              }}
-                              className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
-                            >
-                              Start Match
-                            </button>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 text-[10px] font-extrabold uppercase">Scheduled</span>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                )}
-              </div>
+          {/* Right sidebar */}
+          <div className="space-y-5">
+            {/* Points table */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5 mb-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                <ListOrdered className="w-3.5 h-3.5 text-emerald-500" /> Points table
+              </h3>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[10px] text-neutral-400 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800">
+                    <th className="pb-2 text-left font-semibold">Pos</th>
+                    <th className="pb-2 text-left font-semibold">Club</th>
+                    <th className="pb-2 text-center font-semibold">P</th>
+                    <th className="pb-2 text-center font-semibold">GD</th>
+                    <th className="pb-2 text-right font-semibold">Pts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-50 dark:divide-neutral-800">
+                  {stats.map((row, idx) => (
+                    <tr key={row.teamId} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors">
+                      <td className="py-2.5 font-mono text-neutral-400">{idx + 1}</td>
+                      <td className="py-2.5 font-medium flex items-center gap-1 max-w-[100px] truncate">
+                        <span>{row.teamLogo}</span> {row.teamName}
+                      </td>
+                      <td className="py-2.5 text-center font-mono text-neutral-500">{row.played}</td>
+                      <td className="py-2.5 text-center font-mono text-neutral-600 dark:text-neutral-300">
+                        {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
+                      </td>
+                      <td className="py-2.5 text-right font-bold font-mono text-neutral-900 dark:text-white">{row.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Right: Points Table & Top Scorers */}
-            <div className="space-y-6">
-              {/* Dynamic Points Table */}
-              <div className="p-5 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm space-y-3">
-                <h3 className="text-sm font-extrabold uppercase text-neutral-450 tracking-wider flex items-center gap-1.5 border-b pb-2 dark:border-neutral-800">
-                  <ListOrdered className="w-4 h-4 text-emerald-500" /> Points Table
-                </h3>
+            {/* Leaderboard */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                <Award className="w-3.5 h-3.5 text-emerald-500" /> Leaderboard
+              </h3>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead>
-                      <tr className="text-neutral-400 uppercase text-[10px] border-b dark:border-neutral-850">
-                        <th className="py-2">Pos</th>
-                        <th className="py-2">Club</th>
-                        <th className="py-2 text-center">Pl</th>
-                        <th className="py-2 text-center">GD</th>
-                        <th className="py-2 text-right">Pts</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-855">
-                      {getTournamentStats(selectedTournament).map((row, idx) => (
-                        <tr key={row.teamId} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/20">
-                          <td className="py-2.5 font-bold font-mono text-neutral-500">{idx + 1}</td>
-                          <td className="py-2.5 font-semibold flex items-center gap-1 max-w-[120px] truncate">
-                            <span>{row.teamLogo}</span> {row.teamName}
-                          </td>
-                          <td className="py-2.5 text-center font-mono text-neutral-600 dark:text-neutral-400">{row.played}</td>
-                          <td className="py-2.5 text-center font-mono font-medium text-neutral-800 dark:text-neutral-300">
-                            {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
-                          </td>
-                          <td className="py-2.5 text-right font-black text-neutral-950 dark:text-white font-mono">{row.points}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mb-2">Top scorers</p>
+                {topScorers.length === 0 ? (
+                  <p className="text-xs text-neutral-400 italic">No goals recorded yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {topScorers.map((s, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1 font-medium text-neutral-700 dark:text-neutral-300">
+                          <span>{s.teamLogo}</span> {s.name}
+                        </span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded">
+                          {s.goals}G
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Top Scorers derived dynamically */}
-              <div className="p-5 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm space-y-4">
-                <h3 className="text-sm font-extrabold uppercase text-neutral-450 tracking-wider flex items-center gap-1.5 border-b pb-2 dark:border-neutral-800">
-                  <Award className="w-4 h-4 text-emerald-500" /> Tournament Leaderboard
-                </h3>
-
-                {/* Scorer blocks */}
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-2">Goals Golden Boot</span>
-                    {getTournamentScorers(selectedTournament).topScorers.length === 0 ? (
-                      <span className="text-xs text-neutral-500 italic block">No goals recorded yet in this season.</span>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {getTournamentScorers(selectedTournament).topScorers.map((sl, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs text-neutral-700 dark:text-neutral-300">
-                            <span className="font-semibold flex items-center gap-1">
-                              <span>{sl.teamLogo}</span> {sl.name}
-                            </span>
-                            <span className="font-bold text-emerald-600 font-mono bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded">
-                              {sl.goals} Goals
-                            </span>
-                          </div>
-                        ))}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mb-2">Top assists</p>
+                {topAssists.length === 0 ? (
+                  <p className="text-xs text-neutral-400 italic">No assists recorded yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {topAssists.map((s, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1 font-medium text-neutral-700 dark:text-neutral-300">
+                          <span>{s.teamLogo}</span> {s.name}
+                        </span>
+                        <span className="font-semibold text-blue-600 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded">
+                          {s.assists}A
+                        </span>
                       </div>
-                    )}
+                    ))}
                   </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-2">Defense Key Playmaker (Assists)</span>
-                    {getTournamentScorers(selectedTournament).topAssists.length === 0 ? (
-                      <span className="text-xs text-neutral-500 italic block">No assists recorded yet.</span>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {getTournamentScorers(selectedTournament).topAssists.map((sl, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs text-neutral-700 dark:text-neutral-300">
-                            <span className="font-semibold flex items-center gap-1">
-                              <span>{sl.teamLogo}</span> {sl.name}
-                            </span>
-                            <span className="font-bold text-blue-600 font-mono bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded">
-                              {sl.assists} Assists
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      ) : (
-        /* Default view lists general matches and tournaments tabs */
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white">
-                Match & Tournament Board
-              </h1>
-              <p className="text-sm text-neutral-500">
-                Browse direct 1v1 matchups, active cups, or schedule new tournaments.
-              </p>
-            </div>
+      </div>
+    );
+  }
 
-            {/* Selector Tab pills */}
-            <div className="flex bg-neutral-100 dark:bg-neutral-900 p-1 rounded-xl w-full sm:w-auto">
-              <button
-                id="matches-sub-tab"
-                onClick={() => setActiveSubTab('matches')}
-                className={`flex-1 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  activeSubTab === 'matches'
-                    ? 'bg-white dark:bg-neutral-850 text-neutral-900 dark:text-white shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                }`}
-              >
-                <Dribbble className="w-3.5 h-3.5" /> Matches
-              </button>
-              <button
-                id="tournaments-sub-tab"
-                onClick={() => setActiveSubTab('tournaments')}
-                className={`flex-1 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  activeSubTab === 'tournaments'
-                    ? 'bg-white dark:bg-neutral-850 text-neutral-905 dark:text-white shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5" /> Tournaments
-              </button>
+  // ─── Main board ──────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Match & Tournament Board</h1>
+          <p className="text-sm text-neutral-500 mt-0.5">Browse 1v1 matchups, active cups, or schedule new seasons.</p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => activeSubTab === 'matches' ? setShowCreate1v1Modal(true) : setShowCreateTourneyModal(true)}
+            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-emerald-500/20"
+          >
+            <Plus className="w-4 h-4" />
+            {activeSubTab === 'matches' ? 'Schedule 1v1 match' : 'New tournament'}
+          </button>
+        )}
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex bg-neutral-100 dark:bg-neutral-800/60 p-1 rounded-xl w-full sm:w-64">
+        {(['matches', 'tournaments'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveSubTab(tab)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${
+              activeSubTab === tab
+                ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Matches tab */}
+      {activeSubTab === 'matches' && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+              <input
+                type="text"
+                placeholder="Search teams or venue…"
+                value={matchSearch}
+                onChange={e => setMatchSearch(e.target.value)}
+                className="pl-8 pr-3 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-emerald-500 w-52 dark:text-white transition-colors"
+              />
             </div>
+            <select
+              value={selectedTeamFilter}
+              onChange={e => setSelectedTeamFilter(e.target.value)}
+              className="px-3 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none dark:text-white"
+            >
+              <option value="">All teams</option>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
           </div>
 
-          {activeSubTab === 'matches' ? (
-            /* Direct One vs One Matches Ledger */
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3 justify-between">
-                {/* Filters */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-neutral-400" />
-                    <input
-                      id="inner-match-search"
-                      type="text"
-                      placeholder="Search venue or teams..."
-                      value={matchSearch}
-                      onChange={(e) => setMatchSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.8 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg focus:outline-none focus:border-emerald-500 w-48 sm:w-60 dark:text-white"
-                    />
-                  </div>
-
-                  <select
-                    id="team-filter-select"
-                    value={selectedTeamFilter}
-                    onChange={(e) => setSelectedTeamFilter(e.target.value)}
-                    className="px-2 py-1.8 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg focus:outline-none dark:text-white"
-                  >
-                    <option value="">-- All Teams --</option>
-                    {teams.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {isAdmin && (
-                  <button
-                    id="schedule-1v1-btn"
-                    onClick={() => setShowCreate1v1Modal(true)}
-                    className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-1.8 rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-500/10"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Schedule 1v1 Match
-                  </button>
-                )}
+          {/* Match grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredMatches.length === 0 ? (
+              <div className="md:col-span-2 p-12 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-400">
+                No matches found.
               </div>
+            ) : (
+              filteredMatches.map(m => <MatchCard key={m.id} m={m} />)
+            )}
+          </div>
+        </div>
+      )}
 
-              {/* Grid of Matches */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredMatches.length === 0 ? (
-                  <div className="md:col-span-2 p-12 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500">
-                    No matching scheduled match fixtures found.
-                  </div>
-                ) : (
-                  filteredMatches.map((m) => (
-                    <div
-                      id={`match-block-${m.id}`}
-                      key={m.id}
-                      onClick={() => onViewMatchDetails(m.id)}
-                      className="p-5 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-2xl cursor-pointer hover:shadow-md transition-all space-y-4"
-                    >
-                      <div className="flex justify-between items-center text-xs">
-                        <span className={`px-2 py-0.5 rounded font-extrabold uppercase text-[9px] tracking-wider ${m.type === 'tournament' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-blue-105 text-blue-705 dark:bg-blue-950/40'}`}>
-                          {m.type === 'tournament' ? 'League Round' : 'Simple Match'}
-                        </span>
-                        <span className="text-neutral-500 dark:text-neutral-450 font-medium flex items-center gap-0.5 font-mono">
-                          <MapPin className="w-3 h-3" /> {m.venue}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-7 items-center text-center">
-                        <div className="col-span-2 flex flex-col items-center gap-1.5">
-                          <span className="text-2xl">{m.teamALogo || '⚽'}</span>
-                          <span className="text-xs font-bold text-neutral-800 dark:text-white line-clamp-1">{m.teamAName}</span>
-                        </div>
-
-                        <div className="col-span-3 flex flex-col items-center justify-center gap-1">
-                          {m.status === 'completed' || m.status === 'live' ? (
-                            <span className="text-xl font-black font-mono tracking-tight text-neutral-950 dark:text-white">
-                              {m.scoreA} - {m.scoreB}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-neutral-450 uppercase">VS</span>
-                          )}
-                          <span className="text-[10px] font-mono text-neutral-400">{m.date} {m.time}</span>
-                        </div>
-
-                        <div className="col-span-2 flex flex-col items-center gap-1.5">
-                          <span className="text-2xl">{m.teamBLogo || '⚽'}</span>
-                          <span className="text-xs font-bold text-neutral-800 dark:text-white line-clamp-1">{m.teamBName}</span>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-neutral-100 dark:border-neutral-850 pt-3 flex justify-between items-center text-xs">
-                        <span className="text-neutral-400 font-medium scale-95 origin-left">
-                          Score metrics detailed
-                        </span>
-
-                        <div>
-                          {m.status === 'live' ? (
-                            <span className="text-xs text-red-500 font-semibold uppercase animate-pulse">Live Now</span>
-                          ) : m.status === 'completed' ? (
-                            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-0.5">Completed <Sparkles className="w-3 h-3" /></span>
-                          ) : isAdmin ? (
-                            <button
-                              id={`matches-list-start-btn-${m.id}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onStartMatch(m);
-                              }}
-                              className="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2.5 py-1.2 rounded-lg transition"
-                            >
-                              Start Match
-                            </button>
-                          ) : (
-                            <span className="text-xs text-neutral-450 uppercase font-bold">Scheduled</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+      {/* Tournaments tab */}
+      {activeSubTab === 'tournaments' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tournaments.length === 0 ? (
+            <div className="md:col-span-3 p-12 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-400">
+              No tournaments yet. Create your first season.
             </div>
           ) : (
-            /* Tournaments Season Ledger */
-            <div className="space-y-4">
-              {isAdmin && (
-                <div className="flex justify-end">
-                  <button
-                    id="create-tournament-btn"
-                    onClick={() => setShowCreateTourneyModal(true)}
-                    className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-500/10"
-                  >
-                    <Plus className="w-4 h-4" /> Assemble Tournament Season
-                  </button>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {tournaments.length === 0 ? (
-                  <div className="md:col-span-3 p-12 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 text-neutral-500 text-sm">
-                    No tournaments have been assembled yet.
-                  </div>
-                ) : (
-                  tournaments.map((t) => (
-                    <div
-                      id={`tournament-block-${t.id}`}
-                      key={t.id}
-                      onClick={() => setSelectedTournament(t)}
-                      className="p-5 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-3xl cursor-pointer hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-955/20 transition-all flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-start">
-                          <span className="text-4xl p-3 bg-neutral-50 dark:bg-neutral-800 rounded-2xl">
-                            {t.logo || '🏆'}
-                          </span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${t.status === 'ongoing' ? 'bg-emerald-100 text-emerald-700' : t.status === 'completed' ? 'bg-neutral-100 text-neutral-600' : 'bg-blue-105 text-blue-705'}`}>
-                            {t.status}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1">
-                          <h3 className="font-extrabold text-neutral-900 dark:text-white tracking-tight leading-snug">{t.name}</h3>
-                          {t.description && (
-                            <p className="text-xs text-neutral-450 line-clamp-2 leading-relaxed">
-                              {t.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="border-t border-neutral-100 dark:border-neutral-850 pt-3 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-neutral-400 font-mono">
-                          {t.participatingTeamIds.length} Teams Registered
-                        </span>
-                        <span className="text-emerald-500 font-bold flex items-center gap-0.5">
-                          Season Details <ChevronRight className="w-4 h-4" />
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            tournaments.map(t => <TournamentCard key={t.id} t={t} />)
           )}
         </div>
       )}
 
-      {/* Direct 1v1 Scheduler Modal */}
+      {/* ── 1v1 Modal ───────────────────────────────────────────────────────── */}
       {showCreate1v1Modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-md shadow-2xl animate-scale-in p-6 space-y-4">
-            <div>
-              <h3 className="text-lg font-black text-neutral-900 dark:text-white">Schedule 1v1 Clash</h3>
-              <p className="text-xs text-neutral-570 dark:text-neutral-430">Setup a friendly kickoff between two registered rosters.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-bold text-neutral-900 dark:text-white">Schedule 1v1 match</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">Set up a friendly kickoff between two registered squads.</p>
+              </div>
+              <button onClick={() => setShowCreate1v1Modal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                <X className="w-4 h-4 text-neutral-400" />
+              </button>
             </div>
 
             {formError1v1 && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-650 text-xs rounded-xl flex items-center gap-2">
+              <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {formError1v1}
               </div>
             )}
 
             <form onSubmit={handleCreate1v1Submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Team A (Home)</label>
-                  <select
-                    id="team-a-select"
-                    value={formTeamA}
-                    onChange={(e) => setFormTeamA(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 dark:text-white outline-none"
-                    required
-                  >
-                    <option value="">-- Select --</option>
-                    {teams.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
+                <div>
+                  <label className={labelCls}>Team A (home)</label>
+                  <select value={formTeamA} onChange={e => setFormTeamA(e.target.value)} className={inputCls} required>
+                    <option value="">Select team</option>
+                    {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Team B (Away)</label>
-                  <select
-                    id="team-b-select"
-                    value={formTeamB}
-                    onChange={(e) => setFormTeamB(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 dark:text-white outline-none"
-                    required
-                  >
-                    <option value="">-- Select --</option>
-                    {teams.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
+                <div>
+                  <label className={labelCls}>Team B (away)</label>
+                  <select value={formTeamB} onChange={e => setFormTeamB(e.target.value)} className={inputCls} required>
+                    <option value="">Select team</option>
+                    {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase">Kickoff Date</label>
-                <input
-                  id="kickoff-date-input"
-                  type="date"
-                  value={formDate}
-                  onChange={(e) => setFormDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                  required
-                />
+              <div>
+                <label className={labelCls}>Kickoff date</label>
+                <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className={inputCls} required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Kickoff Time</label>
-                  <input
-                    id="kickoff-time-input"
-                    type="time"
-                    value={formTime}
-                    onChange={(e) => setFormTime(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                    required
-                  />
+                <div>
+                  <label className={labelCls}>Kickoff time</label>
+                  <input type="time" value={formTime} onChange={e => setFormTime(e.target.value)} className={inputCls} required />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Match Venue</label>
-                  <input
-                    id="kickoff-venue-input"
-                    type="text"
-                    value={formVenue}
-                    onChange={(e) => setFormVenue(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none animate-custom-fade"
-                    required
-                  />
+                <div>
+                  <label className={labelCls}>Venue</label>
+                  <input type="text" value={formVenue} onChange={e => setFormVenue(e.target.value)} className={inputCls} required />
                 </div>
               </div>
 
-              <div className="flex gap-2.5 pt-3 border-t">
+              <div className="flex gap-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setShowCreate1v1Modal(false)}
-                  className="flex-1 py-2 text-xs font-bold text-neutral-550 border rounded-lg hover:bg-neutral-50"
+                  className="flex-1 py-2 text-sm font-semibold text-neutral-500 border border-neutral-200 dark:border-neutral-700 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  id="submit-clash-btn"
                   type="submit"
-                  className="flex-1 py-2 text-xs font-bold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-md shadow-emerald-500/10"
+                  className="flex-1 py-2 text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors"
                 >
-                  Schedule Match
+                  Schedule match
                 </button>
               </div>
             </form>
@@ -859,90 +678,66 @@ export default function MatchManagement({
         </div>
       )}
 
-      {/* Assemble Tournament Season Modal */}
+      {/* ── Tournament Modal ─────────────────────────────────────────────────── */}
       {showCreateTourneyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl animate-scale-in">
-            <div className="p-6 border-b flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
+            {/* Modal header */}
+            <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
               <div>
-                <h3 className="text-lg font-black text-neutral-900 dark:text-white font-sans">Assemble Tournament</h3>
-                <p className="text-xs text-neutral-500">Form league schedules and auto-calculate standings.</p>
+                <h3 className="text-base font-bold text-neutral-900 dark:text-white">Create tournament</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">Auto-generate fixtures and track standings.</p>
               </div>
-              <button
-                id="close-tourney-modal-btn"
-                onClick={() => setShowCreateTourneyModal(false)}
-                className="p-1 hover:bg-neutral-100 rounded"
-              >
-                <X className="w-5 h-5 text-neutral-400" />
+              <button onClick={() => setShowCreateTourneyModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                <X className="w-4 h-4 text-neutral-400" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateTourneySubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+            <form onSubmit={handleCreateTourneySubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               {tourneyError && (
-                <div className="p-3 bg-red-50 text-red-650 text-xs rounded-xl flex items-center gap-1.5 font-medium">
-                  <AlertTriangle className="w-4 h-4" /> {tourneyError}
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl">
+                  <AlertTriangle className="w-4 h-4 shrink-0" /> {tourneyError}
                 </div>
               )}
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase">Tournament Name</label>
+              <div>
+                <label className={labelCls}>Tournament name</label>
                 <input
-                  id="tourney-name-input"
                   type="text"
                   placeholder="e.g. Royal Champions League"
                   value={tourneyName}
-                  onChange={(e) => setTourneyName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 dark:text-white outline-none"
+                  onChange={e => setTourneyName(e.target.value)}
+                  className={inputCls}
                   required
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase">Season Description</label>
+              <div>
+                <label className={labelCls}>Description</label>
                 <textarea
-                  id="tourney-desc-textarea"
                   rows={2}
-                  placeholder="League outline or summary rules..."
+                  placeholder="League summary or rules…"
                   value={tourneyDesc}
-                  onChange={(e) => setTourneyDesc(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 dark:text-white outline-none"
+                  onChange={e => setTourneyDesc(e.target.value)}
+                  className={inputCls + ' resize-none'}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Start Date</label>
-                  <input
-                    id="tourney-start-input"
-                    type="date"
-                    value={tourneyStart}
-                    onChange={(e) => setTourneyStart(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                    required
-                  />
+                <div>
+                  <label className={labelCls}>Start date</label>
+                  <input type="date" value={tourneyStart} onChange={e => setTourneyStart(e.target.value)} className={inputCls} required />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">End Date</label>
-                  <input
-                    id="tourney-end-input"
-                    type="date"
-                    value={tourneyEnd}
-                    onChange={(e) => setTourneyEnd(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                    required
-                  />
+                <div>
+                  <label className={labelCls}>End date</label>
+                  <input type="date" value={tourneyEnd} onChange={e => setTourneyEnd(e.target.value)} className={inputCls} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Tournament Logo Emoji</label>
-                  <select
-                    id="tourney-logo-select"
-                    value={tourneyLogo}
-                    onChange={(e) => setTourneyLogo(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                  >
+                <div>
+                  <label className={labelCls}>Logo emoji</label>
+                  <select value={tourneyLogo} onChange={e => setTourneyLogo(e.target.value)} className={inputCls}>
                     <option value="🏆">🏆 Golden Cup</option>
                     <option value="👑">👑 Crown Trophy</option>
                     <option value="🛡️">🛡️ Shield Banner</option>
@@ -950,65 +745,63 @@ export default function MatchManagement({
                     <option value="🔥">🔥 Flame Masters</option>
                   </select>
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Tournament Format</label>
-                  <select
-                    id="tourney-format-select"
-                    value={tourneyFormat}
-                    onChange={(e) => setTourneyFormat(e.target.value as 'round_robin' | 'knockout')}
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl dark:text-white outline-none"
-                  >
-                    <option value="round_robin">Round Robin (League)</option>
-                    <option value="knockout">Knockout Tournament</option>
+                <div>
+                  <label className={labelCls}>Format</label>
+                  <select value={tourneyFormat} onChange={e => setTourneyFormat(e.target.value as 'round_robin' | 'knockout')} className={inputCls}>
+                    <option value="round_robin">Round robin</option>
+                    <option value="knockout">Knockout</option>
                   </select>
                 </div>
               </div>
 
-              {/* Select Participators */}
-              <div className="space-y-1.5 border-t pt-3">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase block">Select Participating Teams</label>
-                <div className="space-y-1 max-h-40 overflow-y-auto border p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-850 bg-opacity-40">
+              {/* Team picker */}
+              <div>
+                <label className={labelCls}>Participating teams</label>
+                <div className="border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden">
                   {teams.length === 0 ? (
-                    <span className="text-xs text-neutral-500 italic">No squads registered. Register squads first.</span>
+                    <p className="text-xs text-neutral-400 italic p-3">No squads registered yet.</p>
                   ) : (
-                    teams.map((tm) => {
-                      const isSelected = selectedTeamIds.includes(tm.id);
-                      return (
-                        <label
-                          key={tm.id}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-850 cursor-pointer select-none text-xs"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleTourneyTeamSelection(tm.id)}
-                            className="rounded text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <span className="font-semibold flex items-center gap-1">
-                            <span>{tm.logo}</span> {tm.name}
-                          </span>
-                        </label>
-                      );
-                    })
+                    <div className="max-h-40 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                      {teams.map(tm => {
+                        const checked = selectedTeamIds.includes(tm.id);
+                        return (
+                          <label
+                            key={tm.id}
+                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleTourneyTeamSelection(tm.id)}
+                              className="rounded text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+                            />
+                            <span className="text-sm font-medium text-neutral-800 dark:text-white flex items-center gap-1.5">
+                              <span>{tm.logo}</span> {tm.name}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
+                {selectedTeamIds.length > 0 && (
+                  <p className="text-[11px] text-emerald-500 font-medium mt-1.5">{selectedTeamIds.length} team{selectedTeamIds.length > 1 ? 's' : ''} selected</p>
+                )}
               </div>
 
-              <div className="flex gap-2.5 pt-4 border-t shrink-0">
+              <div className="flex gap-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setShowCreateTourneyModal(false)}
-                  className="flex-1 py-2 text-xs font-bold text-neutral-550 border rounded-xl hover:bg-neutral-50"
+                  className="flex-1 py-2 text-sm font-semibold text-neutral-500 border border-neutral-200 dark:border-neutral-700 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  id="submit-tourney-btn"
                   type="submit"
-                  className="flex-1 py-2 text-xs font-bold bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow-md shadow-emerald-500/10"
+                  className="flex-1 py-2 text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors"
                 >
-                  Assemble League
+                  Create tournament
                 </button>
               </div>
             </form>

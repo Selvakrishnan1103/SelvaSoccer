@@ -10,8 +10,7 @@ import {
   Flame, 
   Search, 
   X, 
-  AlertCircle,
-  FileText
+  AlertCircle
 } from 'lucide-react';
 
 interface TeamManagementProps {
@@ -44,7 +43,6 @@ export default function TeamManagement({
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Reset form states
   const initForm = () => {
     setFormName('');
     setFormLogo('⚽');
@@ -58,7 +56,6 @@ export default function TeamManagement({
   const togglePlayerSelection = (playerId: string) => {
     if (selectedPlayerIds.includes(playerId)) {
       setSelectedPlayerIds(selectedPlayerIds.filter((id) => id !== playerId));
-      // If player removed was captain or vice captain, clear them
       if (formCaptain === playerId) setFormCaptain('');
       if (formViceCaptain === playerId) setFormViceCaptain('');
     } else {
@@ -102,35 +99,34 @@ export default function TeamManagement({
     initForm();
   };
 
-  // Find player helpers
   const getPlayerName = (id?: string) => {
     const p = players.find((x) => x.id === id);
     return p ? p.name : 'Not Assigned';
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-16">
+    <div className="space-y-6 pb-24 transition-all duration-300">
       {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-neutral-100 dark:border-neutral-800/60 pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
             Team Management Unit
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             View teams, review squad statistics, and assign players/captains.
           </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
             <input
               id="team-search-input"
               type="text"
               placeholder="Search teams..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 pl-9 pr-4 py-2 text-sm bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none transition-all dark:text-white"
+              className="w-full sm:w-64 pl-9 pr-4 py-2 text-sm bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500"
             />
           </div>
 
@@ -141,7 +137,7 @@ export default function TeamManagement({
                 initForm();
                 setShowCreateModal(true);
               }}
-              className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 font-semibold text-white px-4 py-2 rounded-xl text-sm transition-colors shadow-lg shadow-emerald-500/10 shrink-0"
+              className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 font-bold text-white px-4 py-2 rounded-xl text-sm transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 shrink-0"
             >
               <Plus className="w-4 h-4" /> Create Team
             </button>
@@ -154,8 +150,9 @@ export default function TeamManagement({
         {/* Teams List Grid */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filteredTeams.length === 0 ? (
-            <div className="sm:col-span-2 p-12 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
-              No registered teams found.
+            <div className="sm:col-span-2 p-16 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-500">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-60" />
+              <p className="font-medium text-sm">No registered teams found.</p>
             </div>
           ) : (
             filteredTeams.map((team) => (
@@ -163,37 +160,37 @@ export default function TeamManagement({
                 id={`team-card-${team.id}`}
                 key={team.id}
                 onClick={() => setSelectedTeam(team)}
-                className={`p-5 bg-white dark:bg-neutral-900 rounded-2xl border-2 transition-all cursor-pointer ${
+                className={`p-5 bg-white dark:bg-neutral-900 rounded-2xl border-2 transition-all duration-200 cursor-pointer hover:translate-y-[-2px] ${
                   selectedTeam?.id === team.id
-                    ? 'border-emerald-500 shadow-md shadow-emerald-500/10'
-                    : 'border-neutral-150 dark:border-neutral-800 hover:border-neutral-250 dark:hover:border-neutral-750'
+                    ? 'border-emerald-500 shadow-lg shadow-emerald-500/5 dark:shadow-emerald-500/10'
+                    : 'border-neutral-200/70 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 shadow-sm'
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-2xl shadow-inner">
+                  <div className="w-12 h-12 bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-xl flex items-center justify-center text-2xl shadow-inner">
                     {team.logo || '⚽'}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-neutral-950 dark:text-white text-base line-clamp-1">{team.name}</h3>
-                    <span className="text-xs text-neutral-550 dark:text-neutral-450 flex items-center gap-1 font-medium">
-                      <Users className="w-3.5 h-3.5" /> {team.playerIds.length} Squad Members
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-neutral-900 dark:text-white text-base truncate">{team.name}</h3>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5 font-medium">
+                      <Users className="w-3.5 h-3.5 text-neutral-400" /> {team.playerIds.length} Squad Members
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mt-4 text-center border-t border-neutral-100 dark:border-neutral-805 pt-3">
+                <div className="grid grid-cols-3 gap-2 mt-5 text-center border-t border-neutral-100 dark:border-neutral-800/80 pt-3.5">
                   <div>
-                    <span className="text-[10px] text-neutral-450 uppercase font-semibold">Played</span>
-                    <p className="text-sm font-bold font-mono dark:text-neutral-200">{team.matchesPlayed}</p>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-bold tracking-wider">Played</span>
+                    <p className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200 mt-0.5">{team.matchesPlayed}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-neutral-450 uppercase font-semibold">Wins</span>
-                    <p className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">{team.wins}</p>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-bold tracking-wider">Wins</span>
+                    <p className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">{team.wins}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-neutral-450 uppercase font-semibold">GF / GA</span>
-                    <p className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-300">
-                      {team.goalsScored} - {team.goalsConceded}
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-bold tracking-wider">GF / GA</span>
+                    <p className="text-sm font-bold font-mono text-neutral-700 dark:text-neutral-300 mt-0.5">
+                      {team.goalsScored} : {team.goalsConceded}
                     </p>
                   </div>
                 </div>
@@ -203,17 +200,17 @@ export default function TeamManagement({
         </div>
 
         {/* Selected Team Profile side-bar */}
-        <div id="selected-team-details-panel">
+        <div id="selected-team-details-panel" className="lg:sticky lg:top-20">
           {selectedTeam ? (
-            <div className="p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850 rounded-2xl space-y-6">
+            <div className="p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850 rounded-2xl space-y-6 shadow-sm">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                  <div className="text-4xl p-3 bg-neutral-50 dark:bg-neutral-800 rounded-2xl">
+                  <div className="text-4xl p-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-2xl shadow-inner">
                     {selectedTeam.logo || '⚽'}
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-neutral-900 dark:text-white">{selectedTeam.name}</h2>
-                    <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold px-2 py-0.5 rounded">
+                    <h2 className="text-lg font-black text-neutral-900 dark:text-white leading-tight">{selectedTeam.name}</h2>
+                    <span className="inline-block text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold px-2 py-0.5 rounded mt-1 uppercase tracking-wider">
                       Rival Squad
                     </span>
                   </div>
@@ -221,14 +218,14 @@ export default function TeamManagement({
                 <button
                   id="close-selected-team-btn"
                   onClick={() => setSelectedTeam(null)}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded"
+                  className="p-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
                 >
-                  <X className="w-4 h-4 text-neutral-400" />
+                  <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                 </button>
               </div>
 
               {selectedTeam.description && (
-                <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed italic">
+                <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed italic bg-neutral-50 dark:bg-neutral-850/40 p-3 rounded-xl border border-neutral-100 dark:border-neutral-800">
                   "{selectedTeam.description}"
                 </p>
               )}
@@ -236,26 +233,26 @@ export default function TeamManagement({
               {/* Advanced metrics board */}
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Captain', value: getPlayerName(selectedTeam.captainId), icon: ShieldCheck, color: 'text-amber-500' },
-                  { label: 'Vice Captain', value: getPlayerName(selectedTeam.viceCaptainId), icon: UserPlus, color: 'text-blue-500' },
-                  { label: 'Total Points', value: selectedTeam.points, icon: Trophy, color: 'text-emerald-500' },
-                  { label: 'Form Ratio', value: `${selectedTeam.wins}W - ${selectedTeam.draws}D - ${selectedTeam.losses}L`, icon: TrendingUp, color: 'text-emerald-550' },
+                  { label: 'Captain', value: getPlayerName(selectedTeam.captainId), icon: ShieldCheck, color: 'text-amber-500', bg: 'dark:bg-amber-500/5' },
+                  { label: 'Vice Captain', value: getPlayerName(selectedTeam.viceCaptainId), icon: UserPlus, color: 'text-blue-500', bg: 'dark:bg-blue-500/5' },
+                  { label: 'Total Points', value: selectedTeam.points, icon: Trophy, color: 'text-emerald-500', bg: 'dark:bg-emerald-500/5' },
+                  { label: 'Form Ratio', value: `${selectedTeam.wins}W - ${selectedTeam.draws}D - ${selectedTeam.losses}L`, icon: TrendingUp, color: 'text-teal-500', bg: 'dark:bg-teal-500/5' },
                 ].map((stat, i) => (
-                  <div key={i} className="p-3 bg-neutral-50 dark:bg-neutral-850/50 rounded-xl space-y-1">
-                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                  <div key={i} className={`p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl space-y-1 ${stat.bg}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5">
                       <stat.icon className={`w-3.5 h-3.5 ${stat.color}`} /> {stat.label}
                     </span>
-                    <p className="text-xs font-bold text-neutral-800 dark:text-white line-clamp-1">{stat.value}</p>
+                    <p className="text-xs font-bold text-neutral-800 dark:text-white line-clamp-1 truncate">{stat.value}</p>
                   </div>
                 ))}
               </div>
 
               {/* Squad List */}
-              <div className="space-y-3">
-                <span className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider flex items-center gap-1.5 border-b pb-1 dark:border-neutral-800">
-                  <Flame className="w-3.5 h-3.5 text-emerald-500 animate-pulse" /> Roster Players List ({selectedTeam.playerIds.length})
+              <div className="space-y-3 pt-2">
+                <span className="text-[11px] uppercase font-black text-neutral-400 dark:text-neutral-500 tracking-widest flex items-center gap-1.5 border-b pb-2 dark:border-neutral-800">
+                  <Flame className="w-3.5 h-3.5 text-orange-500 animate-pulse" /> Squad Roster ({selectedTeam.playerIds.length})
                 </span>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-800">
                   {selectedTeam.playerIds.map((pId) => {
                     const pl = players.find((p) => p.id === pId);
                     if (!pl) return null;
@@ -263,27 +260,27 @@ export default function TeamManagement({
                       <div
                         id={`team-member-row-${pl.id}`}
                         key={pl.id}
-                        className="flex justify-between items-center p-2 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-800 dark:text-neutral-250 transition-colors"
+                        className="flex justify-between items-center p-2 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-850/60 text-neutral-800 dark:text-neutral-200 border border-transparent hover:border-neutral-100 dark:hover:border-neutral-800/50 transition-all duration-150"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           {pl.profileImage ? (
                             <img
                               src={pl.profileImage}
                               alt={pl.name}
                               referrerPolicy="no-referrer"
-                              className="w-7 h-7 rounded-full object-cover"
+                              className="w-7 h-7 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
                             />
                           ) : (
-                            <div className="w-7 h-7 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-650 dark:text-emerald-400 rounded-full flex items-center justify-center font-bold text-xs font-mono">
+                            <div className="w-7 h-7 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center font-bold text-xs">
                               {pl.name.charAt(0).toUpperCase()}
                             </div>
                           )}
-                          <span className="text-xs font-semibold">{pl.name}</span>
+                          <span className="text-xs font-semibold truncate max-w-[120px]">{pl.name}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-mono text-neutral-400">
-                          <span>{pl.goals} G</span>
+                        <div className="flex items-center gap-2 text-[10px] font-bold font-mono text-neutral-400 dark:text-neutral-500">
+                          <span className="text-neutral-600 dark:text-neutral-400">{pl.goals || 0} G</span>
                           <span>•</span>
-                          <span>{pl.assists} A</span>
+                          <span>{pl.assists || 0} A</span>
                         </div>
                       </div>
                     );
@@ -292,10 +289,10 @@ export default function TeamManagement({
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center bg-neutral-50 dark:bg-neutral-900 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-2xl">
-              <Users className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
-              <h3 className="font-bold text-neutral-700 dark:text-white mb-1">No Team Selected</h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            <div className="p-8 text-center bg-neutral-50 dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
+              <Users className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
+              <h3 className="font-bold text-neutral-700 dark:text-neutral-200 text-sm mb-1">No Team Selected</h3>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 max-w-[240px] mx-auto leading-relaxed">
                 Click on any team card on the left to inspect squad members, captain credentials, and goal details.
               </p>
             </div>
@@ -305,58 +302,58 @@ export default function TeamManagement({
 
       {/* Create Team Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-in">
             {/* Modal Header */}
-            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+            <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900">
               <div>
-                <h3 className="text-lg font-black text-neutral-900 dark:text-white">
-                  Add Football Team
+                <h3 className="text-base font-black text-neutral-900 dark:text-white">
+                  Add New Football Team
                 </h3>
-                <p className="text-xs text-neutral-500">Create a rival club and assign players.</p>
+                <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">Create a team profile and assign roster positions.</p>
               </div>
               <button
                 id="close-create-team-modal-btn"
                 onClick={() => setShowCreateModal(false)}
-                className="p-1.5 hover:bg-neutral-105 dark:hover:bg-neutral-800 rounded-full transition"
+                className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 transition"
               >
-                <X className="w-5 h-5 text-neutral-400" />
+                <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
               </button>
             </div>
 
             {/* Modal Body / Scrollable Form */}
-            <form onSubmit={handleCreateTeamSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+            <form onSubmit={handleCreateTeamSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl flex items-center gap-2 font-medium">
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" /> {formError}
                 </div>
               )}
 
               {/* Team Name */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Team Name</label>
+                <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Team Name</label>
                 <input
                   id="form-team-name-input"
                   type="text"
                   placeholder="e.g. Sparks Capital FC"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-4 py-2 text-sm bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                  className="w-full px-3 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:text-white transition-all"
                   required
                 />
               </div>
 
-              {/* Logo Emoji (Simple representation) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Team Logo Emoji</label>
+              {/* Logo Emoji Selector */}
+              <div className="grid grid-cols-3 gap-4 items-end">
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Team Crest Badge</label>
                   <select
                     id="form-team-logo-select"
                     value={formLogo}
                     onChange={(e) => setFormLogo(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                    className="w-full px-3 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:text-white transition-all"
                   >
-                    <option value="⚽">⚽ Football</option>
+                    <option value="⚽">⚽ Football Classic</option>
                     <option value="⚽👑">👑 Crown Royal</option>
                     <option value="⚽⚡">⚡ Lightning Bolt</option>
                     <option value="⚽⛈️">⛈️ Thunderstorm</option>
@@ -366,48 +363,52 @@ export default function TeamManagement({
                     <option value="⚽🦅">🦅 Golden Eagle</option>
                   </select>
                 </div>
-                <div className="flex items-center justify-center bg-neutral-50 dark:bg-neutral-850 border border-dashed rounded-xl h-22">
-                  <span className="text-4xl">{formLogo}</span>
+                <div className="flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl h-10 w-full shadow-inner">
+                  <span className="text-2xl">{formLogo}</span>
                 </div>
               </div>
 
               {/* Description */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Description</label>
+                <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Strategic Summary / Slogan</label>
                 <textarea
                   id="form-team-desc-textarea"
                   rows={2}
-                  placeholder="Club slogan or strategic summary..."
+                  placeholder="Club values, goals, or summary lines..."
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="w-full px-4 py-2 text-sm bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                  className="w-full px-3 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:text-white transition-all resize-none"
                 />
               </div>
 
               {/* Rostered Player Checklist */}
-              <div className="space-y-1.5 border-t border-neutral-100 dark:border-neutral-850 pt-4">
-                <label className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider block">
-                  Add Registered Players List
+              <div className="space-y-1.5 pt-2">
+                <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block">
+                  Select Players Pool List
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto border border-neutral-100 dark:border-neutral-805 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-850/50">
+                <div className="space-y-1 max-h-36 overflow-y-auto border border-neutral-200 dark:border-neutral-800 p-2 rounded-xl bg-neutral-50 dark:bg-neutral-950/50">
                   {players.filter(p => p.role !== 'admin').map((usr) => {
                     const isChecked = selectedPlayerIds.includes(usr.id);
                     return (
                       <label
                         key={usr.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer select-none text-xs text-neutral-700 dark:text-neutral-300"
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer select-none text-xs border transition-all ${
+                          isChecked 
+                            ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-300' 
+                            : 'border-transparent text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => togglePlayerSelection(usr.id)}
-                            className="rounded border-neutral-320 text-emerald-650 focus:ring-emerald-500"
+                            className="rounded border-neutral-300 dark:border-neutral-700 text-emerald-500 focus:ring-emerald-500/20 w-3.5 h-3.5"
                           />
                           <span className="font-semibold">{usr.name}</span>
                         </div>
-                        <span className="text-[10px] text-neutral-450 uppercase font-mono">
-                          {usr.goals} Goals • {usr.assists} Assists
+                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-bold font-mono uppercase">
+                          {usr.goals || 0}G • {usr.assists || 0}A
                         </span>
                       </label>
                     );
@@ -417,16 +418,16 @@ export default function TeamManagement({
 
               {/* Captain & Vice Captain Selections */}
               {selectedPlayerIds.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 border-t border-neutral-100 dark:border-neutral-850 pt-4">
+                <div className="grid grid-cols-2 gap-4 pt-2 animate-fade-in">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Select Captain</label>
+                    <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Assign Captain</label>
                     <select
                       id="form-team-captain-select"
                       value={formCaptain}
                       onChange={(e) => setFormCaptain(e.target.value)}
-                      className="w-full px-4 py-2 text-sm bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                      className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
                     >
-                      <option value="">-- No Captain --</option>
+                      <option value="">-- Select --</option>
                       {selectedPlayerIds.map((pId) => (
                         <option key={pId} value={pId}>
                           {getPlayerName(pId)}
@@ -436,14 +437,14 @@ export default function TeamManagement({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Select Vice Captain</label>
+                    <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Assign Vice Captain</label>
                     <select
                       id="form-team-vcaptain-select"
                       value={formViceCaptain}
                       onChange={(e) => setFormViceCaptain(e.target.value)}
-                      className="w-full px-4 py-2 text-sm bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                      className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
                     >
-                      <option value="">-- No Vice Captain --</option>
+                      <option value="">-- Select --</option>
                       {selectedPlayerIds
                         .filter((pId) => pId !== formCaptain)
                         .map((pId) => (
@@ -457,18 +458,18 @@ export default function TeamManagement({
               )}
 
               {/* Submit Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="flex gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-600 dark:text-neutral-350 text-xs font-bold rounded-xl transition"
+                  className="flex-1 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-600 dark:text-neutral-300 text-xs font-bold rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   id="submit-create-team-btn"
                   type="submit"
-                  className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-500/15"
+                  className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-md shadow-emerald-500/10 active:scale-98"
                 >
                   Create Team
                 </button>

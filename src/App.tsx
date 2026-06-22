@@ -42,10 +42,7 @@ export default function App() {
   const [inspectedMatchId, setInspectedMatchId] = useState<string | null>(null);
   const [inspectedEvents, setInspectedEvents] = useState<MatchEvent[]>([]);
 
-  const [directCreateTeamModal, setDirectCreateTeamModal] = useState(false);
-  const [directCreateMatchModal, setDirectCreateMatchModal] = useState(false);
-  const [directCreateTourneyModal, setDirectCreateTourneyModal] = useState(false);
-
+  // Sync System Dark Mode Configuration Class
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -54,6 +51,7 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Real-time Database Listeners
   useEffect(() => {
     const unsubs: (() => void)[] = [];
 
@@ -105,6 +103,7 @@ export default function App() {
     };
   }, [activeScoringMatch?.id, inspectedMatchId]);
 
+  // Firebase Authentication Core Watcher State
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
@@ -136,6 +135,7 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
+  // Handler Workflow Functions
   const handleStartMatch = async (match: Match) => {
     const updatedMatch: Match = { ...match, status: 'live' };
     await saveMatch(updatedMatch);
@@ -196,9 +196,9 @@ export default function App() {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 transition-colors duration-200 antialiased selection:bg-emerald-500 selection:text-white">
       {activeScoringMatch ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-in fade-in zoom-in-95 duration-200">
           <LiveScorecard
             match={activeScoringMatch}
             teams={teams}
@@ -222,7 +222,7 @@ export default function App() {
             onOpenLogin={() => setShowAuthModal(true)}
           />
 
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
             {activeTab === 'dashboard' && (
               <DashboardStats
                 teams={teams}
@@ -235,7 +235,7 @@ export default function App() {
                 setActiveTab={setActiveTab}
                 onOpenCreateMatchModal={() => setActiveTab('matches')}
                 onOpenCreateTeamModal={() => setActiveTab('teams')}
-                onOpenCreateTournamentModal={() => setActiveTab('matches')}
+                onOpenCreateTournamentModal={() => setActiveTab('tournaments')}
               />
             )}
 
@@ -296,20 +296,26 @@ export default function App() {
         </>
       )}
 
-      <footer className="border-t dark:border-neutral-900 border-neutral-200 mt-12 bg-white dark:bg-neutral-900/40 text-neutral-450 text-xs py-6 shrink-0 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center">
+      {/* Global Application Footer Container Layout */}
+      <footer className="border-t dark:border-neutral-900 border-neutral-200 mt-auto bg-white dark:bg-neutral-950 text-neutral-400 text-xs py-6 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
           <div>
-            <span className="font-bold tracking-wider text-emerald-500 uppercase text-[10px]">SelvaSoccer League Orchestrator</span>
-            <p className="mt-0.5 text-neutral-400">© 2026 SelvaSoccer Stadium. All rights reserved.</p>
+            <span className="font-extrabold tracking-widest text-emerald-500 uppercase text-[10px] block">
+              SelvaSoccer League Orchestrator
+            </span>
+            <p className="mt-1 text-neutral-400 dark:text-neutral-500 font-medium">
+              &copy; 2026 SelvaSoccer Stadium. All rights reserved.
+            </p>
           </div>
-          <div className="flex gap-4 font-medium text-neutral-400">
-            <span className="cursor-pointer hover:text-emerald-500">Standings</span>
-            <span className="cursor-pointer hover:text-emerald-500">Fixture Calendar</span>
-            <span className="cursor-pointer hover:text-emerald-500">Support unit</span>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold text-neutral-500 dark:text-neutral-400">
+            <span className="cursor-pointer hover:text-emerald-500 transition-colors" onClick={() => setActiveTab('leaderboards')}>Standings</span>
+            <span className="cursor-pointer hover:text-emerald-500 transition-colors" onClick={() => setActiveTab('matches')}>Fixture Calendar</span>
+            <span className="cursor-pointer hover:text-emerald-500 transition-colors">Support Unit</span>
           </div>
         </div>
       </footer>
 
+      {/* Authenticated Global Portal Modals */}
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
