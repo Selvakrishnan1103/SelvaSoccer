@@ -1,0 +1,6 @@
+{
+  "name": "Football Scorecard & Tournament Management",
+  "description": "Full-stack football tournament coordination application, with team formations, automatic round-robin schedules, play event logs, and dynamic overall leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

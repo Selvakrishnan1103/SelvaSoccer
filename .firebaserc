@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "@/*": "gen-lang-client-0430391703"
+  },
+  "targets": {},
+  "etags": {}
+}

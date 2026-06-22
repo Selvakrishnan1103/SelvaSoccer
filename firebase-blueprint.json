@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Information about a user or football player",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "goals": { "type": "integer" },
+        "assists": { "type": "integer" },
+        "matchesPlayed": { "type": "integer" },
+        "wins": { "type": "integer" },
+        "teamHistory": { "type": "array" },
+        "tournamentHistory": { "type": "array" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "Football team information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "logo": { "type": "string" },
+        "description": { "type": "string" },
+        "captainId": { "type": "string" },
+        "viceCaptainId": { "type": "string" },
+        "playerIds": { "type": "array" },
+        "matchesPlayed": { "type": "integer" },
+        "wins": { "type": "integer" },
+        "draws": { "type": "integer" },
+        "losses": { "type": "integer" },
+        "goalsScored": { "type": "integer" },
+        "goalsConceded": { "type": "integer" },
+        "points": { "type": "integer" }
+      },
+      "required": ["id", "name"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A football match instance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["one_vs_one", "tournament"] },
+        "tournamentId": { "type": "string" },
+        "teamAId": { "type": "string" },
+        "teamBId": { "type": "string" },
+        "teamAName": { "type": "string" },
+        "teamBName": { "type": "string" },
+        "teamALogo": { "type": "string" },
+        "teamBLogo": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "venue": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "live", "completed"] },
+        "scoreA": { "type": "integer" },
+        "scoreB": { "type": "integer" },
+        "round": { "type": "integer" },
+        "winnerId": { "type": "string" }
+      },
+      "required": ["id", "type", "teamAId", "teamBId", "status"]
+    },
+    "MatchEvent": {
+      "title": "MatchEvent",
+      "description": "An event occurring during a match",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "matchId": { "type": "string" },
+        "type": { "type": "string", "enum": ["goal", "assist", "yellow_card", "red_card", "own_goal", "substitution"] },
+        "teamId": { "type": "string" },
+        "playerAId": { "type": "string" },
+        "playerAName": { "type": "string" },
+        "playerBId": { "type": "string" },
+        "playerBName": { "type": "string" },
+        "minute": { "type": "integer" }
+      },
+      "required": ["id", "matchId", "type", "minute"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Football tournament information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "logo": { "type": "string" },
+        "format": { "type": "string", "enum": ["round_robin", "knockout"] },
+        "participatingTeamIds": { "type": "array" },
+        "status": { "type": "string", "enum": ["upcoming", "ongoing", "completed"] }
+      },
+      "required": ["id", "name", "format"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Users in the system"
+    },
+    "/teams/{teamId}": {
+      "schema": "Team",
+      "description": "Registered teams"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Matches scheduled or live"
+    },
+    "/matches/{matchId}/events/{eventId}": {
+      "schema": "MatchEvent",
+      "description": "Inside match log of events"
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": "Tournament",
+      "description": "Football tournaments list"
+    }
+  }
+}
