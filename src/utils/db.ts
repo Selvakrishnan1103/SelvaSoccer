@@ -236,13 +236,16 @@ export async function completeMatchWorkflow(
   }
 
   const playerGoalsMap: Record<string, number> = {};
+
   const playerAssistsMap: Record<string, number> = {};
 
   events.forEach((evt) => {
-    if (evt.type === 'goal' && evt.playerAId)
-      playerGoalsMap[evt.playerAId] = (playerGoalsMap[evt.playerAId] || 0) + 1;
-    if (evt.type === 'assist' && evt.playerBId)
-      playerAssistsMap[evt.playerBId] = (playerAssistsMap[evt.playerBId] || 0) + 1;
+    if (evt.type === 'goal') {
+      if (evt.playerAId)
+        playerGoalsMap[evt.playerAId] = (playerGoalsMap[evt.playerAId] || 0) + 1;
+      if (evt.playerBId)
+        playerAssistsMap[evt.playerBId] = (playerAssistsMap[evt.playerBId] || 0) + 1;   // ← fixed
+    }
   });
 
   const playingUserIds = new Set<string>();

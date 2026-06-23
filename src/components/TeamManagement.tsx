@@ -10,7 +10,10 @@ import {
   Flame, 
   Search, 
   X, 
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  UserMinus,
+  UserCheck
 } from 'lucide-react';
 
 interface TeamManagementProps {
@@ -29,6 +32,15 @@ export default function TeamManagement({
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [editPlayerIds, setEditPlayerIds] = useState<string[]>([]);
+  const [editCaptain, setEditCaptain] = useState('');
+  const [editViceCaptain, setEditViceCaptain] = useState('');
+  const [editError, setEditError] = useState('');
+  const [editSearchQuery, setEditSearchQuery] = useState('');
 
   // Form states for creating a team
   const [formName, setFormName] = useState('');
@@ -62,6 +74,61 @@ export default function TeamManagement({
       setSelectedPlayerIds([...selectedPlayerIds, playerId]);
     }
   };
+
+  // ─── Edit modal helpers ───────────────────────────────────────────────────
+  const openEditModal = (team: Team) => {
+    setEditingTeam(team);
+    setEditPlayerIds([...team.playerIds]);
+    setEditCaptain(team.captainId || '');
+    setEditViceCaptain(team.viceCaptainId || '');
+    setEditError('');
+    setEditSearchQuery('');
+    setShowEditModal(true);
+  };
+
+  const toggleEditPlayer = (playerId: string) => {
+    if (editPlayerIds.includes(playerId)) {
+      setEditPlayerIds(editPlayerIds.filter((id) => id !== playerId));
+      if (editCaptain === playerId) setEditCaptain('');
+      if (editViceCaptain === playerId) setEditViceCaptain('');
+    } else {
+      setEditPlayerIds([...editPlayerIds, playerId]);
+    }
+  };
+
+  const handleEditSubmit = () => {
+    setEditError('');
+    if (!editingTeam) return;
+
+    if (editPlayerIds.length === 0) {
+      setEditError('A team must have at least one player.');
+      return;
+    }
+
+    const updatedTeam: Team = {
+      ...editingTeam,
+      playerIds: editPlayerIds,
+      captainId: editCaptain || undefined,
+      viceCaptainId: editViceCaptain || undefined,
+    };
+
+    onSaveTeam(updatedTeam);
+
+    // Keep the side panel in sync
+    if (selectedTeam?.id === updatedTeam.id) {
+      setSelectedTeam(updatedTeam);
+    }
+
+    setShowEditModal(false);
+    setEditingTeam(null);
+  };
+
+  // Filtered list for the edit modal player picker
+  const editFilteredPlayers = players
+    .filter((p) => p.role !== 'admin')
+    .filter((p) =>
+      p.name.toLowerCase().includes(editSearchQuery.toLowerCase())
+    );
 
   const handleCreateTeamSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,13 +282,25 @@ export default function TeamManagement({
                     </span>
                   </div>
                 </div>
-                <button
-                  id="close-selected-team-btn"
-                  onClick={() => setSelectedTeam(null)}
-                  className="p-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
-                >
-                  <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {isAdmin && (
+                    <button
+                      id="edit-selected-team-btn"
+                      onClick={() => openEditModal(selectedTeam)}
+                      title="Edit squad roster"
+                      className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors border border-transparent hover:border-amber-200 dark:hover:border-amber-800/50 group"
+                    >
+                      <Pencil className="w-4 h-4 text-neutral-400 dark:text-neutral-500 group-hover:text-amber-500 transition-colors" />
+                    </button>
+                  )}
+                  <button
+                    id="close-selected-team-btn"
+                    onClick={() => setSelectedTeam(null)}
+                    className="p-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
+                  >
+                    <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                  </button>
+                </div>
               </div>
 
               {selectedTeam.description && (
@@ -299,6 +378,189 @@ export default function TeamManagement({
           )}
         </div>
       </div>
+
+      {/* ── Edit Squad Modal ─────────────────────────────────────────── */}
+      {showEditModal && editingTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-xl flex items-center justify-center text-lg">
+                  {editingTeam.logo || '⚽'}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-neutral-900 dark:text-white">
+                    Edit Squad — {editingTeam.name}
+                  </h3>
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+                    Add or remove players, reassign captain roles.
+                  </p>
+                </div>
+              </div>
+              <button
+                id="close-edit-team-modal-btn"
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 transition"
+              >
+                <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {editError && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" /> {editError}
+                </div>
+              )}
+
+              {/* Current squad count pill */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" /> Player Pool
+                </span>
+                <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 px-2 py-0.5 rounded-full">
+                  {editPlayerIds.length} selected
+                </span>
+              </div>
+
+              {/* Player search within edit modal */}
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
+                <input
+                  type="text"
+                  placeholder="Filter players..."
+                  value={editSearchQuery}
+                  onChange={(e) => setEditSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-4 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500"
+                />
+              </div>
+
+              {/* Player toggle list */}
+              <div className="space-y-1.5 max-h-52 overflow-y-auto border border-neutral-200 dark:border-neutral-800 p-2 rounded-xl bg-neutral-50 dark:bg-neutral-950/50">
+                {editFilteredPlayers.length === 0 && (
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center py-4">No players match your search.</p>
+                )}
+                {editFilteredPlayers.map((usr) => {
+                  const isIn = editPlayerIds.includes(usr.id);
+                  return (
+                    <label
+                      key={usr.id}
+                      className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer select-none text-xs border transition-all ${
+                        isIn
+                          ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-300'
+                          : 'border-transparent text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {usr.profileImage ? (
+                          <img
+                            src={usr.profileImage}
+                            alt={usr.name}
+                            referrerPolicy="no-referrer"
+                            className="w-6 h-6 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                          />
+                        ) : (
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] ${isIn ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500'}`}>
+                            {usr.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="font-semibold">{usr.name}</span>
+                        {/* Captain / VC badges */}
+                        {editCaptain === usr.id && (
+                          <span className="text-[9px] font-black bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">C</span>
+                        )}
+                        {editViceCaptain === usr.id && (
+                          <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">VC</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-bold font-mono">
+                          {usr.goals || 0}G • {usr.assists || 0}A
+                        </span>
+                        <div
+                          onClick={(e) => { e.preventDefault(); toggleEditPlayer(usr.id); }}
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
+                            isIn
+                              ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-950/50'
+                              : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/50'
+                          }`}
+                        >
+                          {isIn
+                            ? <UserMinus className="w-3.5 h-3.5 text-rose-500" />
+                            : <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                          }
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {/* Captain & Vice Captain re-assignment */}
+              {editPlayerIds.length > 0 && (
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-amber-500" /> Captain
+                    </label>
+                    <select
+                      id="edit-team-captain-select"
+                      value={editCaptain}
+                      onChange={(e) => setEditCaptain(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                    >
+                      <option value="">-- None --</option>
+                      {editPlayerIds.map((pId) => (
+                        <option key={pId} value={pId}>{getPlayerName(pId)}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1">
+                      <UserPlus className="w-3 h-3 text-blue-500" /> Vice Captain
+                    </label>
+                    <select
+                      id="edit-team-vcaptain-select"
+                      value={editViceCaptain}
+                      onChange={(e) => setEditViceCaptain(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl focus:border-emerald-500 focus:outline-none dark:text-white"
+                    >
+                      <option value="">-- None --</option>
+                      {editPlayerIds
+                        .filter((pId) => pId !== editCaptain)
+                        .map((pId) => (
+                          <option key={pId} value={pId}>{getPlayerName(pId)}</option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-neutral-100 dark:border-neutral-800 flex gap-3 bg-neutral-50/50 dark:bg-neutral-900 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-600 dark:text-neutral-300 text-xs font-bold rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                id="submit-edit-team-btn"
+                type="button"
+                onClick={handleEditSubmit}
+                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition shadow-md shadow-amber-500/10 active:scale-98"
+              >
+                Save Squad Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Team Modal */}
       {showCreateModal && (

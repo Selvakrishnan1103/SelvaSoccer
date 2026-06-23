@@ -196,15 +196,17 @@ export default function MatchManagement({
     tourneyMatches.forEach(m => {
       const envs = matchEventsMap[m.id] || [];
       envs.forEach(evt => {
-        if (evt.type === 'goal' && evt.playerAId) {
-          if (!goalsScorecard[evt.playerAId])
-            goalsScorecard[evt.playerAId] = { name: evt.playerAName, teamLogo: getTeamLogo(evt.teamId), goals: 0 };
-          goalsScorecard[evt.playerAId].goals += 1;
-        }
-        if (evt.type === 'assist' && evt.playerBId) {
-          if (!assistsScorecard[evt.playerBId])
-            assistsScorecard[evt.playerBId] = { name: evt.playerBName || 'Anonymous', teamLogo: getTeamLogo(evt.teamId), assists: 0 };
-          assistsScorecard[evt.playerBId].assists += 1;
+        if (evt.type === 'goal') {
+          if (evt.playerAId) {
+            if (!goalsScorecard[evt.playerAId])
+              goalsScorecard[evt.playerAId] = { name: evt.playerAName, teamLogo: getTeamLogo(evt.teamId), goals: 0 };
+            goalsScorecard[evt.playerAId].goals += 1;
+          }
+          if (evt.playerBId) {
+            if (!assistsScorecard[evt.playerBId])
+              assistsScorecard[evt.playerBId] = { name: evt.playerBName || 'Anonymous', teamLogo: getTeamLogo(evt.teamId), assists: 0 };
+            assistsScorecard[evt.playerBId].assists += 1;
+          }
         }
       });
     });
