@@ -12,6 +12,12 @@ import {
 import { db } from '../firebase';
 import { UserProfile, Team, Match, MatchEvent, Tournament } from '../types';
 
+function stripUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+}
+
 async function getCollectionData<T>(collectionName: string): Promise<T[]> {
   try {
     const colRef = collection(db, collectionName);
@@ -52,27 +58,27 @@ export async function fetchTournaments(): Promise<Tournament[]> {
 
 export async function saveUser(userId: string, data: Partial<UserProfile>): Promise<void> {
   const userDoc = doc(db, 'users', userId);
-  await setDoc(userDoc, data, { merge: true });
+  await setDoc(userDoc, stripUndefined(data), { merge: true });
 }
 
 export async function saveTeam(team: Team): Promise<void> {
   const teamDoc = doc(db, 'teams', team.id);
-  await setDoc(teamDoc, team);
+  await setDoc(teamDoc, stripUndefined(team));
 }
 
 export async function saveMatch(match: Match): Promise<void> {
   const matchDoc = doc(db, 'matches', match.id);
-  await setDoc(matchDoc, match);
+  await setDoc(matchDoc, stripUndefined(match));
 }
 
 export async function saveTournament(tournament: Tournament): Promise<void> {
   const tournamentDoc = doc(db, 'tournaments', tournament.id);
-  await setDoc(tournamentDoc, tournament);
+  await setDoc(tournamentDoc, stripUndefined(tournament));
 }
 
 export async function addMatchEvent(matchId: string, event: MatchEvent): Promise<void> {
   const eventDoc = doc(db, 'matches', matchId, 'events', event.id);
-  await setDoc(eventDoc, event);
+  await setDoc(eventDoc, stripUndefined(event));
 }
 
 export async function deleteMatchEvent(matchId: string, eventId: string): Promise<void> {
