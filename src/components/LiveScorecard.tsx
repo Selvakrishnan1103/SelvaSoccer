@@ -107,9 +107,10 @@ export default function LiveScorecard({
         teamId: evtTeamId,
         playerAId: evtPlayerA,
         playerAName: actorAPlayer ? actorAPlayer.name : 'Own Goal Scorer',
-        playerBId: evtPlayerB || undefined,
-        playerBName: actorBPlayer ? actorBPlayer.name : undefined,
-        minute: evtMinute
+        minute: evtMinute,
+        ...(evtPlayerB && actorBPlayer
+          ? { playerBId: evtPlayerB, playerBName: actorBPlayer.name }
+          : {}),
       };
 
       await onAddEvent(newEvent);
